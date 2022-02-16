@@ -7,6 +7,19 @@ import 'package:poke_app_1/domain/usecases/usecases.dart';
 
 import 'remote_request_kanto_pk_test.mocks.dart';
 
+class RemotePokeTag implements PokeTag {
+  @override
+  final String name;
+  @override
+  final String url;
+
+  RemotePokeTag({required this.name, required this.url});
+
+  factory RemotePokeTag.fromJson(Map json) {
+    return RemotePokeTag(name: json['name'], url: json['url']);
+  }
+}
+
 class RemoteRequestKantoPk implements RequestKanto {
   final HttpClient httpClient;
   final String url;
@@ -15,12 +28,17 @@ class RemoteRequestKantoPk implements RequestKanto {
 
   @override
   Future<List<PokeTag>> get() async {
-    return await httpClient.request(url);
+    final response = await httpClient.request(url);
+    List<PokeTag> listPk = [];
+    for (var map in response) {
+      listPk.add(RemotePokeTag.fromJson(map));
+    }
+    return listPk;
   }
 }
 
 abstract class HttpClient {
-  Future<Map> request(String url);
+  Future<List<Map>> request(String url);
 }
 
 @GenerateMocks([HttpClient])
@@ -31,7 +49,9 @@ void main() {
 
   PostExpectation mockRequest() => when(client.request(url));
   void mockResponse() {
-    mockRequest().thenAnswer((_) async => {'poke': 'pickachu'});
+    mockRequest().thenAnswer((_) async => [
+          {'name': 'pickachu', 'url': url}
+        ]);
   }
 
   setUp(() {
