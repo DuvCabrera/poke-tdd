@@ -16,11 +16,9 @@ class RemoteRequestKantoPk implements RequestKanto {
   Future<List<PokeTag>> get() async {
     try {
       final response = await httpClient.request(url);
-      List<PokeTag> listPk = [];
-      for (var map in response) {
-        listPk.add(RemotePokeTag.fromJson(map));
-      }
-      return listPk;
+      return response
+          .map((map) => RemotePokeTag.fromJson(map).toEntity())
+          .toList();
     } on HttpError {
       throw DomainError.unexpected;
     }

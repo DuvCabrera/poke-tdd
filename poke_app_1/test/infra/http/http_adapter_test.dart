@@ -15,7 +15,7 @@ class HttpAdapter implements HttpClient {
 
   HttpAdapter(this.client);
   @override
-  Future<List<dynamic>> request(String url) async {
+  Future<List<Map>> request(String url) async {
     final response = await client.get(Uri.parse(url));
     return jsonDecode(response.body);
   }

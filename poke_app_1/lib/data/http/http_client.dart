@@ -1,3 +1,3 @@
 abstract class HttpClient {
-  Future<dynamic> request(String url);
+  Future<List<Map>> request(String url);
 }
