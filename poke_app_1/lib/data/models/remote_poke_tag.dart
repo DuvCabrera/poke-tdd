@@ -16,4 +16,8 @@ class RemotePokeTag implements PokeTag {
     }
     return RemotePokeTag(name: json['name'], url: json['url']);
   }
+
+  PokeTag toEntity() {
+    return PokeTag(name: name, url: url);
+  }
 }
