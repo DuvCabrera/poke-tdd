@@ -3,9 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:poke_app_1/domain/entites/entities.dart';
+import 'package:poke_app_1/domain/helpers/domain_error.dart';
 import 'package:poke_app_1/domain/usecases/usecases.dart';
 
 import 'remote_request_kanto_pk_test.mocks.dart';
+
+enum HttpError {
+  badRequest,
+  notFound,
+}
 
 class RemotePokeTag implements PokeTag {
   @override
@@ -28,12 +34,16 @@ class RemoteRequestKantoPk implements RequestKanto {
 
   @override
   Future<List<PokeTag>> get() async {
-    final response = await httpClient.request(url);
-    List<PokeTag> listPk = [];
-    for (var map in response) {
-      listPk.add(RemotePokeTag.fromJson(map));
+    try {
+      final response = await httpClient.request(url);
+      List<PokeTag> listPk = [];
+      for (var map in response) {
+        listPk.add(RemotePokeTag.fromJson(map));
+      }
+      return listPk;
+    } on HttpError {
+      throw DomainError.unexpected;
     }
-    return listPk;
   }
 }
 
@@ -54,6 +64,10 @@ void main() {
         ]);
   }
 
+  void mockResponseError(error) {
+    mockRequest().thenThrow(error);
+  }
+
   setUp(() {
     url = faker.internet.httpUrl();
     client = MockHttpClient();
@@ -71,5 +85,12 @@ void main() {
     final response = await sut.get();
 
     expect(response, isA<List<PokeTag>>());
+  });
+
+  test('should return an DomainError when 400 ', () async {
+    mockResponseError(HttpError.badRequest);
+    final future = sut.get();
+
+    expect(future, throwsA(DomainError.unexpected));
   });
 }
