@@ -11,6 +11,7 @@ import 'remote_request_kanto_pk_test.mocks.dart';
 enum HttpError {
   badRequest,
   notFound,
+  invalidData,
 }
 
 class RemotePokeTag implements PokeTag {
@@ -22,6 +23,9 @@ class RemotePokeTag implements PokeTag {
   RemotePokeTag({required this.name, required this.url});
 
   factory RemotePokeTag.fromJson(Map json) {
+    if (!json.containsKey('name') && !json.containsKey('url')) {
+      throw HttpError.invalidData;
+    }
     return RemotePokeTag(name: json['name'], url: json['url']);
   }
 }
@@ -58,13 +62,17 @@ void main() {
   late String url;
 
   PostExpectation mockRequest() => when(client.request(url));
-  void mockResponse() {
+  void mockResponseSucces() {
     mockRequest().thenAnswer((_) async => [
           {'name': 'pickachu', 'url': url}
         ]);
   }
 
-  void mockResponseError(error) {
+  void mockResponseError() {
+    mockRequest().thenAnswer((_) async => [{}]);
+  }
+
+  void mockResponseTrow(error) {
     mockRequest().thenThrow(error);
   }
 
@@ -72,7 +80,7 @@ void main() {
     url = faker.internet.httpUrl();
     client = MockHttpClient();
     sut = RemoteRequestKantoPk(httpClient: client, url: url);
-    mockResponse();
+    mockResponseSucces();
   });
 
   test('RemoteRequestKantoPk must call the correct arguments', () async {
@@ -88,7 +96,14 @@ void main() {
   });
 
   test('should return an DomainError when 400 ', () async {
-    mockResponseError(HttpError.badRequest);
+    mockResponseTrow(HttpError.badRequest);
+    final future = sut.get();
+
+    expect(future, throwsA(DomainError.unexpected));
+  });
+
+  test('should return an DomainError when invalidData ', () async {
+    mockResponseError();
     final future = sut.get();
 
     expect(future, throwsA(DomainError.unexpected));
