@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../domain/entites/entities.dart';
 
 import '../http/http.dart';
@@ -20,4 +22,6 @@ class RemotePokeTag implements PokeTag {
   PokeTag toEntity() {
     return PokeTag(name: name, url: url);
   }
+
+  Map<String, dynamic> toMap() => {'name': name, 'url': url};
 }

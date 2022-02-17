@@ -5,19 +5,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'package:poke_app_1/data/http/http.dart';
 import 'package:http/http.dart';
 
 import 'http_adapter_test.mocks.dart';
 
-class HttpAdapter implements HttpClient {
+class HttpAdapter {
   final Client client;
 
   HttpAdapter(this.client);
   @override
   Future<List<Map>> request(String url) async {
     final response = await client.get(Uri.parse(url));
-    return jsonDecode(response.body);
+    return (jsonDecode(response.body) as List)
+        .map((map) => map as Map<String, dynamic>)
+        .toList();
   }
 }
 
@@ -32,8 +33,8 @@ void main() {
   }
 
   void mockResponseSucces() {
-    mockRequest().thenAnswer((_) async =>
-        Response('[{"lal":"lala","":""},{"lal":"lala","":""}]', 200));
+    mockRequest().thenAnswer((_) async => Response(
+        '[{"name": "poke", "url":"url"},{"name": "poke", "url":"url"}]', 200));
   }
 
   setUp(() {
@@ -42,9 +43,16 @@ void main() {
     sut = HttpAdapter(client);
     mockResponseSucces();
   });
-  test('shold call get with correct value', () async {
+
+  test('should call get with correct value', () async {
     await sut.request(url);
 
     verify(client.get(Uri.parse(url)));
+  });
+
+  test('get should return List<Map> when success', () async {
+    final result = await sut.request(url);
+
+    expect(result, isA<List<Map>>());
   });
 }
